@@ -37,7 +37,7 @@ namespace QuantLib {
         Variables". Journal of Statistical Software 5 (8).  Note that
         step 2 from the above paper reuses the rightmost 8 bits of the
         random integer, which creates correlation between steps 1 and
-        2.  This implementation was written from scratch, following
+        2.  This implementation was written from experimental, following
         Marsaglia and Tsang.  It avoids the correlation by using only
         the leftmost 24 bits of mt19937's output.
 

@@ -252,7 +252,7 @@ int main(int, char* []) {
           ***    QUOTES    ***
           ********************/
 
-         // SimpleQuote stores a value which can be manually changed;
+         // SimpleQuote stores a value which can be manually x`changed;
          // other Quote subclasses could read the value from a database
          // or some kind of data feed.
 

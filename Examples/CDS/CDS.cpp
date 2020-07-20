@@ -68,7 +68,7 @@ void example01() {
     Date todaysDate(15, May, 2007);
     // must be a business day
     todaysDate = calendar.adjust(todaysDate);
-
+    Date ref_date(1, January, 1901) ;
     Settings::instance().evaluationDate() = todaysDate;
 
     // dummy curve
@@ -97,6 +97,8 @@ void example01() {
     for (Size i = 0; i < 4; i++) {
         maturities.push_back(
             calendar.adjust(todaysDate + tenors[i], Following));
+        std::cout<<"Maturity: "<<std::endl;
+        std::cout<<maturities[i]<<endl ;
     }
 
     std::vector<ext::shared_ptr<DefaultProbabilityHelper> > instruments;
@@ -138,20 +140,22 @@ void example01() {
     // reprice instruments
     Real nominal = 1000000.0;
     Handle<DefaultProbabilityTermStructure> probability(hazardRateStructure);
+//    ext::shared_ptr<PricingEngine> engine(
+//        new MidPointCdsEngine(probability, recovery_rate, tsCurve));
     ext::shared_ptr<PricingEngine> engine(
-        new MidPointCdsEngine(probability, recovery_rate, tsCurve));
+        new IsdaCdsEngine(probability, recovery_rate, tsCurve));
 
-    Schedule cdsSchedule = MakeSchedule()
+    Schedule cdsSchedule_3m = MakeSchedule()
                                .from(todaysDate)
                                .to(maturities[0])
                                .withFrequency(Quarterly)
                                .withCalendar(calendar)
                                .withTerminationDateConvention(Unadjusted)
                                .withRule(DateGeneration::TwentiethIMM);
-    CreditDefaultSwap cds_3m(Protection::Seller, nominal, quoted_spreads[0],
-                             cdsSchedule, Following, Actual365Fixed());
+    CreditDefaultSwap cds_3m(Protection::Buyer, nominal, 0.05, quoted_spreads[0],
+                             cdsSchedule_3m, Following, Actual365Fixed());
 
-    cdsSchedule = MakeSchedule()
+    Schedule cdsSchedule_6m = MakeSchedule()
                       .from(todaysDate)
                       .to(maturities[1])
                       .withFrequency(Quarterly)
@@ -159,9 +163,9 @@ void example01() {
                       .withTerminationDateConvention(Unadjusted)
                       .withRule(DateGeneration::TwentiethIMM);
     CreditDefaultSwap cds_6m(Protection::Seller, nominal, quoted_spreads[1],
-                             cdsSchedule, Following, Actual365Fixed());
+                             cdsSchedule_6m, Following, Actual365Fixed());
 
-    cdsSchedule = MakeSchedule()
+    Schedule cdsSchedule_1y = MakeSchedule()
                       .from(todaysDate)
                       .to(maturities[2])
                       .withFrequency(Quarterly)
@@ -169,9 +173,9 @@ void example01() {
                       .withTerminationDateConvention(Unadjusted)
                       .withRule(DateGeneration::TwentiethIMM);
     CreditDefaultSwap cds_1y(Protection::Seller, nominal, quoted_spreads[2],
-                             cdsSchedule, Following, Actual365Fixed());
+                             cdsSchedule_1y, Following, Actual365Fixed());
 
-    cdsSchedule = MakeSchedule()
+    Schedule cdsSchedule_2y = MakeSchedule()
                       .from(todaysDate)
                       .to(maturities[3])
                       .withFrequency(Quarterly)
@@ -179,12 +183,14 @@ void example01() {
                       .withTerminationDateConvention(Unadjusted)
                       .withRule(DateGeneration::TwentiethIMM);
     CreditDefaultSwap cds_2y(Protection::Seller, nominal, quoted_spreads[3],
-                             cdsSchedule, Following, Actual365Fixed());
+                             cdsSchedule_2y, Following, Actual365Fixed());
 
     cds_3m.setPricingEngine(engine);
     cds_6m.setPricingEngine(engine);
     cds_1y.setPricingEngine(engine);
     cds_2y.setPricingEngine(engine);
+    double dummy  = cds_3m.fairUpfront() ;
+    double default_npv = cds_3m.defaultLegNPV() ;
 
     cout << "Repricing of quoted CDSs employed for calibration: " << endl;
     cout << "3M fair spread: " << io::rate(cds_3m.fairSpread()) << endl
